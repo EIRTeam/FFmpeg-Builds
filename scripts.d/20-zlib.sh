@@ -15,9 +15,11 @@ ffbuild_dockerbuild() {
         --static
     )
 
+    export AR="${FFBUILD_CROSS_PREFIX}ar"
     if [[ $TARGET == win* || $TARGET == linux* ]]; then
         export CC="${FFBUILD_CROSS_PREFIX}gcc"
-        export AR="${FFBUILD_CROSS_PREFIX}ar"
+    elif [[ $TARGET == macos* ]]; then
+        export CC="${FFBUILD_CROSS_PREFIX}clang"
     else
         echo "Unknown target"
         return -1

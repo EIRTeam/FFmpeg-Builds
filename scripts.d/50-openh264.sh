@@ -16,10 +16,20 @@ ffbuild_dockerbuild() {
         BUILDTYPE=Release
         DEBUGSYMBOLS=False
         LIBDIR_NAME=lib
-        CC="$FFBUILD_CROSS_PREFIX"gcc
-        CXX="$FFBUILD_CROSS_PREFIX"g++
         AR="$FFBUILD_CROSS_PREFIX"ar
     )
+
+    if [[ $TARGET == macos* ]]; then
+        myconf+=(
+            CC="$FFBUILD_CROSS_PREFIX"clang
+            CXX="$FFBUILD_CROSS_PREFIX"clang++
+        )
+    else
+        myconf+=(
+            CC="$FFBUILD_CROSS_PREFIX"gcc
+            CXX="$FFBUILD_CROSS_PREFIX"g++
+        )
+    fi
 
     if [[ $TARGET == win32 ]]; then
         myconf+=(
@@ -40,6 +50,12 @@ ffbuild_dockerbuild() {
         myconf+=(
             OS=linux
             ARCH=aarch64
+        )
+    elif [[ $TARGET == macos64 ]]; then
+        myconf+=(
+            OS=darwin
+            ARCH=x86_64
+            STATIC_LDFLAGS=-lc++
         )
     else
         echo "Unknown target"

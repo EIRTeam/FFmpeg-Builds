@@ -47,6 +47,11 @@ ffbuild_dockerbuild() {
             --cross-compile-prefix="$FFBUILD_CROSS_PREFIX"
             linux-aarch64
         )
+    elif [[ $TARGET == macos64 ]]; then
+        myconf+=(
+            --cross-compile-prefix="$FFBUILD_CROSS_PREFIX"
+            darwin64-x86_64-cc
+        )
     else
         echo "Unknown target"
         return -1

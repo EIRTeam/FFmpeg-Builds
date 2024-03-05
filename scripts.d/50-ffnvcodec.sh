@@ -8,6 +8,7 @@ SCRIPT_COMMIT2="dc3e4484dc83485734e503991fe5ed3bdf256fba"
 SCRIPT_BRANCH2="sdk/11.1"
 
 ffbuild_enabled() {
+    [[ $TARGET != macos* ]] || return -1
     return 0
 }
 

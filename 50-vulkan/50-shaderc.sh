@@ -28,8 +28,15 @@ ffbuild_dockerbuild() {
     # for some reason, this does not get installed...
     cp libshaderc_util/libshaderc_util.a "$FFBUILD_PREFIX"/lib
 
-    echo "Libs: -lstdc++" >> "$FFBUILD_PREFIX"/lib/pkgconfig/shaderc_combined.pc
-    echo "Libs: -lstdc++" >> "$FFBUILD_PREFIX"/lib/pkgconfig/shaderc_static.pc
+    unset CPP_LIB
+    if [[ $TARGET == macos* ]]; then
+        CPP_LIB="c++"
+    else
+        CPP_LIB="stdc++"
+    fi
+
+    echo "Libs: -l$CPP_LIB" >> "$FFBUILD_PREFIX"/lib/pkgconfig/shaderc_combined.pc
+    echo "Libs: -l$CPP_LIB" >> "$FFBUILD_PREFIX"/lib/pkgconfig/shaderc_static.pc
 
     cp "$FFBUILD_PREFIX"/lib/pkgconfig/{shaderc_combined,shaderc}.pc
 

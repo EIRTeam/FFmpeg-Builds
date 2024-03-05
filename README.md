@@ -1,8 +1,10 @@
 # FFmpeg Static Auto-Builds
 
-Static Windows (x86_64) and Linux (x86_64) Builds of ffmpeg master and latest release branch.
+Static Windows (x86_64), macOS (x86_64) and Linux (x86_64) Builds of ffmpeg master and latest release branch.
 
 Windows builds are targetting Windows 7 and newer.
+
+macOS builds are targetting macOS 12.3 and newer (Monterey - darwin21.4)
 
 Linux (x86_64) builds are targetting Ubuntu 16.04 (glibc-2.23 + linux-4.4) and anything more recent.
 
@@ -47,6 +49,7 @@ On success, the resulting zip file will be in the `artifacts` subdir.
 Available targets:
 * `win64` (x86_64 Windows)
 * `win32` (x86 Windows)
+* `macos64` (x86_64 macOS)
 * `linux64` (x86_64 Linux, glibc>=2.23, linux>=4.4)
 * `linuxarm64` (arm64 (aarch64) Linux, glibc>=2.27, linux>=4.15)
 
