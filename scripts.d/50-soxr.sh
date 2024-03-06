@@ -12,11 +12,18 @@ ffbuild_dockerbuild() {
 
     mkdir build && cd build
 
-    cmake -DCMAKE_TOOLCHAIN_FILE="$FFBUILD_CMAKE_TOOLCHAIN" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$FFBUILD_PREFIX" -DWITH_OPENMP=ON -DBUILD_TESTS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF ..
+    # Disable OpenMP on macOS
+    unset FFBUILD_OPENMP
+    if [[ $TARGET != macos* ]]; then
+        FFBUILD_OPENMP="-DWITH_OPENMP=ON"
+    fi
+    cmake -DCMAKE_TOOLCHAIN_FILE="$FFBUILD_CMAKE_TOOLCHAIN" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$FFBUILD_PREFIX" "$FFBUILD_OPENMP" -DBUILD_TESTS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF ..
     make -j$(nproc)
     make install
 
-    echo "Libs.private: -lgomp" >> "$FFBUILD_PREFIX"/lib/pkgconfig/soxr.pc
+    if [[ $TARGET != macos* ]]; then
+        echo "Libs.private: -lgomp" >> "$FFBUILD_PREFIX"/lib/pkgconfig/soxr.pc
+    fi
 }
 
 ffbuild_configure() {
@@ -32,5 +39,7 @@ ffbuild_ldflags() {
 }
 
 ffbuild_libs() {
-    echo -lgomp
+    if [[ $TARGET != macos* ]]; then
+        echo -lgomp
+    fi
 }

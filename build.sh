@@ -33,6 +33,11 @@ for script in scripts.d/**/*.sh; do
     FF_LIBS+=" $(get_output $script libs)"
 done
 
+if [[ $TARGET == macos* ]]; then
+    FF_CFLAGS+=" -mmacosx-version-min=12.3"
+    FF_CXXFLAGS+=" -mmacosx-version-min=12.3"
+fi
+
 FF_CONFIGURE="$(xargs <<< "$FF_CONFIGURE")"
 FF_CFLAGS="$(xargs <<< "$FF_CFLAGS")"
 FF_CXXFLAGS="$(xargs <<< "$FF_CXXFLAGS")"

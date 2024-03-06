@@ -2,3 +2,5 @@
 /ffbuild/
 /artifacts/
 /.cache/
+
+MacOS*sdk.tar.xz

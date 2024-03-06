@@ -114,15 +114,40 @@ jobs:
           owner_type: user
           untagged_only: false
           keep_latest: 20
+  extract_macos_sdk:
+    needs: build_base
+    runs-on: "macos-12"
+    name: Extract macOS SDK
+    steps:
+      - name: "Load cache"
+        uses: actions/cache@v4
+        id: "macos_sdk_cache"
+        with:
+          path: ~/MacOSX12.3.sdk.tar.xz
+          key: MacOS-sdk
+          save-always: true
+        continue-on-error: true
+
+      - name: "Checkout osxcross"
+        if: steps.macos_sdk_cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v3
+        with:
+          repository: tpoechtrager/osxcross
+
+      - name: "Extract SDK"
+        if: steps.macos_sdk_cache.outputs.cache-hit != 'true'
+        run: |
+          XCODEDIR=/Applications/Xcode_14.0.1.app ./tools/gen_sdk_package.sh
+          mv MacOSX12.3.sdk.tar.xz ~
   build_target_bases:
     name: Build target base image
     if: ${{ github.event.inputs.buildOnly != 'true' }}
-    needs: build_base
+    needs: extract_macos_sdk
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        target: [win64,linux64,linuxarm64]
+        target: [win64,linux64,linuxarm64,macos64,macosarm64]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -145,6 +170,19 @@ jobs:
           echo "gh_repo=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
       - name: Stop Commands
         run: T="$(echo -n ${{ github.token }} | sha256sum | head -c 64)" && echo -e "::add-mask::${T}\n::stop-commands::${T}"
+      - name: "Retrieve macOS SDK"
+        if: ${{ matrix.target == 'macos64' || matrix.target == 'macosarm64' }}
+        uses: actions/cache@v4
+        id: "cache-sdk"
+        with:
+          path: ~/MacOSX12.3.sdk.tar.xz
+          key: MacOS-sdk
+        continue-on-error: false
+      - name: "Setup macOS SDK"
+        if: ${{ matrix.target == 'macos64' || matrix.target == 'macosarm64' }}
+        run: |
+          cp ~/MacOSX12.3.sdk.tar.xz images/base-macos64/MacOSX12.3.sdk.tar.xz
+          cp ~/MacOSX12.3.sdk.tar.xz images/base-macosarm64/MacOSX12.3.sdk.tar.xz
       - name: Build target base image
         uses: docker/build-push-action@v3
         with:
@@ -175,11 +213,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [win64,linux64]
+        target: [win64,linux64,macos64,macosarm64]
         variant: [lgpl-godot]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: "Retrieve macOS SDK"
+        if: ${{ matrix.target == 'macos64' || matrix.target == 'macosarm64' }}
+        uses: actions/cache@v4
+        id: "cache-sdk"
+        with:
+          path: ~/MacOSX12.3.sdk.tar.xz
+          key: MacOS-sdk
+        continue-on-error: false
+      - name: "Setup macOS SDK"
+        if: ${{ matrix.target == 'macos64' || matrix.target == 'macosarm64' }}
+        run: |
+          cp ~/MacOSX12.3.sdk.tar.xz images/base-macos64/MacOSX12.3.sdk.tar.xz
+          cp ~/MacOSX12.3.sdk.tar.xz images/base-macosarm64/MacOSX12.3.sdk.tar.xz
       - name: Install buildx
         uses: docker/setup-buildx-action@v2
         with:
@@ -228,11 +279,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [win64,linux64]
+        target: [win64,linux64,macos64,macosarm64]
         variant: [lgpl-godot]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: "Retrieve macOS SDK"
+        if: ${{ matrix.target == 'macos64' || matrix.target == 'macosarm64' }}
+        uses: actions/cache@v4
+        id: "cache-sdk"
+        with:
+          path: ~/MacOSX12.3.sdk.tar.xz
+          key: MacOS-sdk
+        continue-on-error: false
+      - name: "Setup macOS SDK"
+        if: ${{ matrix.target == 'macos64' || matrix.target == 'macosarm64' }}
+        run: |
+          cp ~/MacOSX12.3.sdk.tar.xz images/base-macos64/MacOSX12.3.sdk.tar.xz
+          cp ~/MacOSX12.3.sdk.tar.xz images/base-macosarm64/MacOSX12.3.sdk.tar.xz
       - name: Login to Docker
         uses: docker/login-action@v2
         with:

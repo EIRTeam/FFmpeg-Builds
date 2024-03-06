@@ -1,13 +1,15 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/FFmpeg/nv-codec-headers.git"
-SCRIPT_COMMIT="855f8263d97bbdcaeabaaaa2997e1ccad7c52dc3"
+SCRIPT_COMMIT="75f032b24263c2b684b9921755cafc1c08e41b9d"
 
 SCRIPT_REPO2="https://github.com/FFmpeg/nv-codec-headers.git"
 SCRIPT_COMMIT2="dc3e4484dc83485734e503991fe5ed3bdf256fba"
 SCRIPT_BRANCH2="sdk/11.1"
 
 ffbuild_enabled() {
+    # No NVENC on macOS
+    if [[ $TARGET == macos* ]]; then return -1; fi
     return 0
 }
 

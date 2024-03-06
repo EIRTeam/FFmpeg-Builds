@@ -1,8 +1,10 @@
 # FFmpeg Static Auto-Builds
 
-Static Windows (x86_64) and Linux (x86_64) Builds of ffmpeg master and latest release branch.
+Static Windows (x86_64), macOS (x86_64 and arm64) and Linux (x86_64) Builds of ffmpeg master and latest release branch.
 
 Windows builds are targetting Windows 7 and newer.
+
+macOS (x86_64 and arm64) builds are targetting macOS 12.3 and newer (Monterey - darwin21.4)
 
 Linux (x86_64) builds are targetting Ubuntu 16.04 (glibc-2.23 + linux-4.4) and anything more recent.
 
@@ -32,6 +34,13 @@ Every file corresponds to its respective package.
 * bash
 * docker
 
+> [!WARNING]
+> To compile for macOS, you'll need to provide the SDK (`MacOSX12.3.sdk.tar.xz`) yourself. This can be extracted from a macOS machine or from downloading Xcode by [follow these instructions](https://github.com/tpoechtrager/osxcross?tab=readme-ov-file#packaging-the-sdk).
+>
+> Once extracted, place the SDK in the following directories, depending on your target:
+> - **x86_64** - `images/base-macos64`
+> - **arm64** - `images/base-macosarm64`
+
 ### Build Image
 
 * `./makeimage.sh target variant [addin [addin] [addin] ...]`
@@ -47,6 +56,8 @@ On success, the resulting zip file will be in the `artifacts` subdir.
 Available targets:
 * `win64` (x86_64 Windows)
 * `win32` (x86 Windows)
+* `macos64` (x86_64 macOS)
+* `macosarm64` (arm64 macOS)
 * `linux64` (x86_64 Linux, glibc>=2.23, linux>=4.4)
 * `linuxarm64` (arm64 (aarch64) Linux, glibc>=2.27, linux>=4.15)
 

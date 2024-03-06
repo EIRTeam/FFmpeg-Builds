@@ -42,7 +42,7 @@ ffbuild_dockerbuild() {
         )
     fi
 
-    if [[ $TARGET == win* || $TARGET == linux* ]]; then
+    if [[ $TARGET == win* || $TARGET == linux* || $TARGET == macos* ]]; then
         myconf+=(
             --cross-file=/cross.meson
         )
@@ -55,7 +55,14 @@ ffbuild_dockerbuild() {
     ninja -j$(nproc)
     ninja install
 
-    echo "Libs.private: -lstdc++" >> "$FFBUILD_PREFIX"/lib/pkgconfig/libplacebo.pc
+    unset CPP_LIB
+    if [[ $TARGET == macos* ]]; then
+        CPP_LIB="c++"
+    else
+        CPP_LIB="stdc++"
+    fi
+
+    echo "Libs.private: -l$CPP_LIB" >> "$FFBUILD_PREFIX"/lib/pkgconfig/libplacebo.pc
 }
 
 ffbuild_configure() {

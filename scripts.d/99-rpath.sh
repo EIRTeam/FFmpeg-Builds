@@ -3,7 +3,7 @@
 SCRIPT_SKIP="1"
 
 ffbuild_enabled() {
-    [[ $TARGET == linux* ]]
+    [[ $TARGET == linux* ]] || [[ $TARGET == macos* ]]
 }
 
 ffbuild_dockerfinal() {
@@ -35,7 +35,12 @@ ffbuild_ldexeflags() {
 
     if [[ $VARIANT == *shared* ]]; then
         # Can't escape escape hell
-        echo -Wl,-rpath='\\\\\\\$\\\$ORIGIN'
-        echo -Wl,-rpath='\\\\\\\$\\\$ORIGIN/../lib'
+        if [[ $TARGET == macos* ]]; then
+            echo -Wl,-rpath,'\\\\\\\$\\\$ORIGIN'
+            echo -Wl,-rpath,'\\\\\\\$\\\$ORIGIN/../lib'
+        else
+            echo -Wl,-rpath='\\\\\\\$\\\$ORIGIN'
+            echo -Wl,-rpath='\\\\\\\$\\\$ORIGIN/../lib'
+        fi
     fi
 }

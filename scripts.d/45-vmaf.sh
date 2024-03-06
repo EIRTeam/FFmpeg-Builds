@@ -26,7 +26,7 @@ ffbuild_dockerbuild() {
         -Denable_float=true
     )
 
-    if [[ $TARGET == win* || $TARGET == linux* ]]; then
+    if [[ $TARGET == win* || $TARGET == linux* || $TARGET == macos* ]]; then
         myconf+=(
             --cross-file=/cross.meson
         )
@@ -39,7 +39,14 @@ ffbuild_dockerbuild() {
     ninja -j"$(nproc)"
     ninja install
 
-    sed -i 's/Libs.private:/Libs.private: -lstdc++/; t; $ a Libs.private: -lstdc++' "$FFBUILD_PREFIX"/lib/pkgconfig/libvmaf.pc
+    unset CPP_LIB
+    if [[ $TARGET == macos* ]]; then
+        CPP_LIB="c++"
+    else
+        CPP_LIB="stdc++"
+    fi
+
+    sed -i "s/Libs.private:/Libs.private: -l$CPP_LIB/; t; \$ a Libs.private: -l$CPP_LIB" "$FFBUILD_PREFIX"/lib/pkgconfig/libvmaf.pc
 }
 
 ffbuild_configure() {

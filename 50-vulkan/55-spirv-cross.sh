@@ -23,6 +23,13 @@ ffbuild_dockerbuild() {
     make -j$(nproc)
     make install
 
+    unset CPP_LIB
+    if [[ $TARGET == macos* ]]; then
+        CPP_LIB="c++"
+    else
+        CPP_LIB="stdc++"
+    fi
+
     cat >"$FFBUILD_PREFIX"/lib/pkgconfig/spirv-cross-c-shared.pc <<EOF
 prefix=$FFBUILD_PREFIX
 exec_prefix=\${prefix}
@@ -35,7 +42,7 @@ Description: C API for SPIRV-Cross
 Version: $VER_FULL
 
 Requires:
-Libs: -L\${libdir} -L\${sharedlibdir} -lspirv-cross-c -lspirv-cross-glsl -lspirv-cross-hlsl -lspirv-cross-reflect -lspirv-cross-msl -lspirv-cross-util -lspirv-cross-core -lstdc++
+Libs: -L\${libdir} -L\${sharedlibdir} -lspirv-cross-c -lspirv-cross-glsl -lspirv-cross-hlsl -lspirv-cross-reflect -lspirv-cross-msl -lspirv-cross-util -lspirv-cross-core -l\${CPP_LIB}
 Cflags: -I\${includedir}
 EOF
 }
