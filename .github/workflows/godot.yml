@@ -1,0 +1,53 @@
+name: Godot FFmpeg
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish packages to the godot-9.0 release
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [linux64, win64]
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./godot/build.sh "${{ matrix.target }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ffmpeg-${{ matrix.target }}
+          path: artifacts/*
+          if-no-files-found: error
+  publish:
+    if: ${{ inputs.publish }}
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ffmpeg-*
+          merge-multiple: true
+          path: artifacts
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd artifacts
+          sha256sum *.tar.xz > SHA256SUMS
+          if ! gh release view godot-9.0 --repo "$GITHUB_REPOSITORY"; then
+            gh release create godot-9.0 --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" --title "Godot FFmpeg 9.0" \
+              --notes "Trimmed LGPL shared FFmpeg with H.264/HEVC Vulkan Video. See godot/README.md for build details."
+          fi
+          gh release upload godot-9.0 ./* --repo "$GITHUB_REPOSITORY" --clobber

@@ -30,7 +30,7 @@ env:
 jobs:
   pre_check:
     name: Pre Checks
-    if: ${{ github.event.inputs.buildOnly != 'true' }}
+    if: ${{ github.repository == 'FFmpeg-Builds/FFmpeg-Builds' && github.event.inputs.buildOnly != 'true' }}
     runs-on: ubuntu-slim
     steps:
       - name: Repo Check
@@ -428,7 +428,7 @@ jobs:
           untagged_only: true
   build_ffmpeg:
     name: Build ffmpeg
-    if: ${{ ( github.event.inputs.buildOnly == 'true' && !cancelled() ) || success() }}
+    if: ${{ github.repository == 'FFmpeg-Builds/FFmpeg-Builds' && ( ( github.event.inputs.buildOnly == 'true' && !cancelled() ) || success() ) }}
     needs: [build_targets, merge_targets]
     runs-on: ubuntu-latest
     strategy:
