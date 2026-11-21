@@ -47,7 +47,7 @@ jobs:
           sha256sum *.tar.xz > SHA256SUMS
           if ! gh release view godot-9.0 --repo "$GITHUB_REPOSITORY"; then
             gh release create godot-9.0 --repo "$GITHUB_REPOSITORY" \
-              --target "$GITHUB_SHA" --title "Godot FFmpeg 9.0" \
+              --target "$GITHUB_SHA" --prerelease --title "Godot FFmpeg 9.0" \
               --notes "Trimmed LGPL shared FFmpeg with H.264/HEVC Vulkan Video. See godot/README.md for build details."
           fi
           gh release upload godot-9.0 ./* --repo "$GITHUB_REPOSITORY" --clobber
