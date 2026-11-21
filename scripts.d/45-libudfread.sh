@@ -1,36 +1,36 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://code.videolan.org/videolan/libudfread.git"
-SCRIPT_COMMIT="b3e6936a23f8af30a0be63d88f4695bdc0ea26e1"
+SCRIPT_COMMIT="b0bc6957e7e07d5f35391f210596d9eb71cffdd9"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    cd "$FFBUILD_DLDIR/$SELF"
+    # stop the static library from exporting symbols when linked into a shared lib
+    sed -i 's/-DUDFREAD_API_EXPORT/-DUDFREAD_API_EXPORT_DISABLED/g' src/meson.build
 
-    ./bootstrap
+    mkdir build && cd build
 
     local myconf=(
         --prefix="$FFBUILD_PREFIX"
-        --disable-shared
-        --enable-static
-        --with-pic
+        -Ddefault_library=static
+        -Denable_examples=false
     )
 
     if [[ $TARGET == win* || $TARGET == linux* ]]; then
         myconf+=(
-            --host="$FFBUILD_TOOLCHAIN"
+            --cross-file=/cross.meson
         )
     else
         echo "Unknown target"
         return -1
     fi
 
-    ./configure "${myconf[@]}"
-    make -j$(nproc)
-    make install
+    meson setup "${myconf[@]}" ..
+    ninja -j$(nproc)
+    DESTDIR="$FFBUILD_DESTDIR" ninja install
 
-    ln -s libudfread.pc "$FFBUILD_PREFIX"/lib/pkgconfig/udfread.pc
+    ln -s libudfread.pc "$FFBUILD_DESTPREFIX"/lib/pkgconfig/udfread.pc
 }

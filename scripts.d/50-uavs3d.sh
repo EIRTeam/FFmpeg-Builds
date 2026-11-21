@@ -1,27 +1,27 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/uavs3/uavs3d.git"
-SCRIPT_COMMIT="1fd04917cff50fac72ae23e45f82ca6fd9130bd8"
+SCRIPT_COMMIT="0e20d2c291853f196c68922a264bcd8471d75b68"
 
 ffbuild_enabled() {
     [[ $TARGET == win32 ]] && return -1
+    [[ $TARGET == winarm64 ]] && return -1
+    (( $(ffbuild_ffver) >= 404 )) || return -1
     return 0
 }
 
 ffbuild_dockerdl() {
-    to_df "RUN git clone \"$SCRIPT_REPO\" \"$SELF\" && git -C \"$SELF\" checkout \"$SCRIPT_COMMIT\""
+    echo "git clone \"$SCRIPT_REPO\" . && git checkout \"$SCRIPT_COMMIT\""
 }
 
 ffbuild_dockerbuild() {
-    cd "$FFBUILD_DLDIR/$SELF"
-
     mkdir build/linux
     cd build/linux
 
     cmake -DCMAKE_TOOLCHAIN_FILE="$FFBUILD_CMAKE_TOOLCHAIN" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$FFBUILD_PREFIX" \
-        -DCOMPILE_10BIT=1 -DBUILD_SHARED_LIBS=NO ../..
+        -DCOMPILE_10BIT=1 -DBUILD_SHARED_LIBS=NO -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ../..
     make -j$(nproc)
-    make install
+    make install DESTDIR="$FFBUILD_DESTDIR"
 }
 
 ffbuild_configure() {
@@ -29,5 +29,6 @@ ffbuild_configure() {
 }
 
 ffbuild_unconfigure() {
+    (( $(ffbuild_ffver) >= 404 )) || return 0
     echo --disable-libuavs3d
 }

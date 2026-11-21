@@ -1,15 +1,18 @@
 #!/bin/bash
 
-SCRIPT_REPO="https://github.com/xz-mirror/xz.git"
-SCRIPT_COMMIT="66bdcfa85fef2911cc80f5f30fed3f9610faccb4"
+SCRIPT_REPO="https://github.com/tukaani-project/xz.git"
+SCRIPT_COMMIT="f54febc540607b3bdee0a0e6793355df2a7e9f61"
+
+ffbuild_depends() {
+    echo base
+    echo libiconv
+}
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    cd "$FFBUILD_DLDIR/$SELF"
-
     ./autogen.sh --no-po4a --no-doxygen
 
     local myconf=(
@@ -31,7 +34,7 @@ ffbuild_dockerbuild() {
 
     ./configure "${myconf[@]}"
     make -j$(nproc)
-    make install
+    make install DESTDIR="$FFBUILD_DESTDIR"
 }
 
 ffbuild_configure() {

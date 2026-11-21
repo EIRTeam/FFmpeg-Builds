@@ -1,28 +1,54 @@
-FROM ubuntu:23.04
+FROM scratch AS scripts
+COPY *.sh /
 
-ENV FFBUILD_DLDIR="/opt/ffdl"
+FROM ubuntu:26.04
 
-ENV DEBIAN_FRONTEND noninteractive
+ARG TARGETPLATFORM
+
+ENV DEBIAN_FRONTEND=noninteractive
 RUN \
-    mkdir -p "$FFBUILD_DLDIR" && \
     apt-get -y update && \
     apt-get -y dist-upgrade && \
-    apt-get -y install build-essential yasm nasm \
-        xxd pkgconf curl wget unzip git subversion mercurial \
-        autoconf automake libtool libtool-bin autopoint gettext cmake clang meson ninja-build \
-        texinfo texi2html help2man flex bison groff \
-        gperf itstool ragel libc6-dev libssl-dev \
+    apt-get -y install --no-install-recommends \
+        $([ "$TARGETPLATFORM" != "linux/amd64" ] || echo gcc-multilib g++-multilib) \
+        build-essential yasm nasm \
+        xxd pkgconf curl wget unzip zip git subversion mercurial rsync jq \
+        autoconf automake libtool libtool-bin libltdl-dev autopoint gettext cmake ninja-build \
+        clang llvm lcov lld qemu-user \
+        texinfo texi2html help2man flex bison groff libxml2-utils \
+        gperf itstool ragel libc6-dev zlib1g-dev libssl-dev \
         gtk-doc-tools gobject-introspection gawk \
-        ocaml ocamlbuild libnum-ocaml-dev indent p7zip-full \
-        python3-distutils python3-jinja2 python3-jsonschema python3-apt python-is-python3 && \
-    apt-get -y clean && \
+        ocaml ocaml-findlib ocamlbuild libnum-ocaml-dev indent p7zip-full zstd libarchive-tools \
+        default-jdk-headless ant \
+        python3-setuptools python3-pip python3-venv python3-jinja2 python3-jsonschema python3-apt python3-dev python-is-python3 && \
+    if [ "$TARGETPLATFORM" = "linux/riscv64" ]; then \
+        curl -fsSL https://unofficial-builds.nodejs.org/install-node.sh | bash -s -- -l 24 -d /usr; \
+    else \
+        curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
+        apt-get -y install nodejs; \
+    fi && \
+    apt-get -y autoremove && \
+    apt-get -y clean autoclean && \
+    rm -rf /var/lib/apt/lists/* && \
     git config --global user.email "builder@localhost" && \
     git config --global user.name "Builder" && \
     git config --global advice.detachedHead false
 
+RUN wget https://archive.ubuntu.com/ubuntu/pool/main/a/autoconf/autoconf_2.73-2_all.deb -O autoconf.deb && \
+    dpkg -i autoconf.deb && \
+    rm autoconf.deb
+
+RUN python3 -m pip install --break-system-packages meson
+
 ENV CARGO_HOME="/opt/cargo" RUSTUP_HOME="/opt/rustup" PATH="/opt/cargo/bin:${PATH}"
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y --no-modify-path && \
-    cargo install cargo-c && rm -rf "${CARGO_HOME}"/registry "${CARGO_HOME}"/git
+    ( [ "$TARGETPLATFORM" = "linux/riscv64" ] || cargo install cargo-c ) && \
+    rm -rf "${CARGO_HOME}"/registry "${CARGO_HOME}"/git
 
-RUN --mount=src=.,dst=/input \
+RUN --mount=from=scripts,dst=/input \
     for s in /input/*.sh; do cp $s /usr/bin/$(echo $s | sed -e 's|.*/||' -e 's/\.sh$//'); done
+
+ENV HOST_CC="gcc" \
+    HOST_CXX="g++" \
+    HOST_CFLAGS="-O2 -pipe" \
+    HOST_CXXFLAGS="-O2 -pipe"

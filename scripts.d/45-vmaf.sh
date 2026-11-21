@@ -1,15 +1,13 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/Netflix/vmaf.git"
-SCRIPT_COMMIT="98bdd77b296da207ab42c3113ec8f30de58db197"
+SCRIPT_COMMIT="cf677baaa039723876fff8c2677164f25102e684"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    cd "$FFBUILD_DLDIR/$SELF"
-
     # Kill build of unused and broken tools
     echo > libvmaf/tools/meson.build
 
@@ -22,9 +20,20 @@ ffbuild_dockerbuild() {
         -Dbuilt_in_models=true
         -Denable_tests=false
         -Denable_docs=false
-        -Denable_avx512=true
         -Denable_float=true
     )
+
+    if [[ $TARGET == *32 ]]; then
+        myconf+=(
+            -Denable_avx512=false
+            -Denable_asm=false
+        )
+    else
+        myconf+=(
+            -Denable_avx512=true
+            -Denable_asm=true
+        )
+    fi
 
     if [[ $TARGET == win* || $TARGET == linux* ]]; then
         myconf+=(
@@ -35,14 +44,15 @@ ffbuild_dockerbuild() {
         return -1
     fi
 
-    meson "${myconf[@]}" ../libvmaf
+    meson "${myconf[@]}" ../libvmaf || cat meson-logs/meson-log.txt
     ninja -j"$(nproc)"
-    ninja install
+    DESTDIR="$FFBUILD_DESTDIR" ninja install
 
-    sed -i 's/Libs.private:/Libs.private: -lstdc++/; t; $ a Libs.private: -lstdc++' "$FFBUILD_PREFIX"/lib/pkgconfig/libvmaf.pc
+    sed -i 's/Libs.private:/Libs.private: -lstdc++/; t; $ a Libs.private: -lstdc++' "$FFBUILD_DESTPREFIX"/lib/pkgconfig/libvmaf.pc
 }
 
 ffbuild_configure() {
+    (( $(ffbuild_ffver) >= 501 )) || return 0
     echo --enable-libvmaf
 }
 

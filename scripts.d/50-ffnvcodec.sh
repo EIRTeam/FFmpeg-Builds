@@ -1,29 +1,38 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/FFmpeg/nv-codec-headers.git"
-SCRIPT_COMMIT="855f8263d97bbdcaeabaaaa2997e1ccad7c52dc3"
+SCRIPT_COMMIT="f2053071ea93137255b6dcf42e9b4c9e0965a44e"
 
 SCRIPT_REPO2="https://github.com/FFmpeg/nv-codec-headers.git"
-SCRIPT_COMMIT2="dc3e4484dc83485734e503991fe5ed3bdf256fba"
-SCRIPT_BRANCH2="sdk/11.1"
+SCRIPT_COMMIT2="ced4f8eba3ba5dd431932cba17928f0dffdaeb2b"
+SCRIPT_BRANCH2="sdk/13.0"
+
+SCRIPT_REPO3="https://github.com/FFmpeg/nv-codec-headers.git"
+SCRIPT_COMMIT3="833faee5f7b8d3f56444347c587f4aed11ee213f"
+SCRIPT_BRANCH3="sdk/11.1"
 
 ffbuild_enabled() {
+    [[ $TARGET == winarm64 ]] && (( $(ffbuild_ffver) <= 801 )) && return -1
+    (( $(ffbuild_ffver) >= 404 )) || return -1
     return 0
 }
 
 ffbuild_dockerdl() {
     default_dl ffnvcodec
-    to_df "RUN git-mini-clone \"$SCRIPT_REPO2\" \"$SCRIPT_COMMIT2\" ffnvcodec2"
+    echo "git-mini-clone \"$SCRIPT_REPO2\" \"$SCRIPT_COMMIT2\" ffnvcodec2"
+    echo "git-mini-clone \"$SCRIPT_REPO3\" \"$SCRIPT_COMMIT3\" ffnvcodec3"
 }
 
 ffbuild_dockerbuild() {
-    if [[ $ADDINS_STR == *4.4* || $ADDINS_STR == *5.0* || $ADDINS_STR == *5.1* ]]; then
-        cd "$FFBUILD_DLDIR"/ffnvcodec2
+    if (( $FFVER < 800 )); then
+        cd ffnvcodec3
+    elif (( $FFVER <= 801 )); then
+        cd ffnvcodec2
     else
-        cd "$FFBUILD_DLDIR"/ffnvcodec
+        cd ffnvcodec
     fi
 
-    make PREFIX="$FFBUILD_PREFIX" install
+    make PREFIX="$FFBUILD_PREFIX" DESTDIR="$FFBUILD_DESTDIR" install
 }
 
 ffbuild_configure() {

@@ -1,36 +1,40 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/xiph/opus.git"
-SCRIPT_COMMIT="9fc8fc4cf432640f284113ba502ee027268b0d9f"
+SCRIPT_COMMIT="f1afc4222aff7c5456d27581ec618ae64158fbe1"
 
 ffbuild_enabled() {
     return 0
 }
 
-ffbuild_dockerbuild() {
-    cd "$FFBUILD_DLDIR/$SELF"
+ffbuild_dockerdl() {
+    default_dl .
 
-    ./autogen.sh
+    # This is where they decided to put downloads for external dependencies, so it needs to run here
+    echo "./autogen.sh"
+}
+
+ffbuild_dockerbuild() {
+    # re-run autoreconf explicitly because tools versions might have changed since it generared the dl cache
+    autoreconf -isf
 
     local myconf=(
         --prefix="$FFBUILD_PREFIX"
+        --host="$FFBUILD_TOOLCHAIN"
         --disable-shared
         --enable-static
         --disable-extra-programs
     )
 
-    if [[ $TARGET == win* || $TARGET == linux* ]]; then
+    if [[ $TARGET == winarm* ]]; then
         myconf+=(
-            --host="$FFBUILD_TOOLCHAIN"
+            --disable-rtcd
         )
-    else
-        echo "Unknown target"
-        return -1
     fi
 
     ./configure "${myconf[@]}"
     make -j$(nproc)
-    make install
+    make install DESTDIR="$FFBUILD_DESTDIR"
 }
 
 ffbuild_configure() {

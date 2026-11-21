@@ -3,15 +3,18 @@
 SCRIPT_SKIP="1"
 
 ffbuild_enabled() {
-    [[ $TARGET != linux* ]] && return -1
     return 0
 }
 
 ffbuild_dockerdl() {
-    return 0
+    true
 }
 
 ffbuild_dockerbuild() {
-    rm "$FFBUILD_PREFIX"/lib/lib*.so* || true
-    rm "$FFBUILD_PREFIX"/lib/*.la || true
+    mkdir -p "$FFBUILD_DESTPREFIX"
+
+    if [[ $TARGET == linux* ]]; then
+        rm "$FFBUILD_DESTPREFIX"/lib/lib*.so* || true
+        rm "$FFBUILD_DESTPREFIX"/lib/*.la || true
+    fi
 }
