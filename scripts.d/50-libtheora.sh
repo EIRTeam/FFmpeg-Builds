@@ -1,15 +1,18 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/xiph/theora.git"
-SCRIPT_COMMIT="7180717276af1ebc7da15c83162d6c5d6203aabf"
+SCRIPT_COMMIT="28fd5ec77f0ad0e07a371cef1047828116f6bd8a"
+
+ffbuild_depends() {
+    echo base
+    echo libogg
+}
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    cd "$FFBUILD_DLDIR/$SELF"
-
     ./autogen.sh
 
     local myconf=(
@@ -33,9 +36,15 @@ ffbuild_dockerbuild() {
         return -1
     fi
 
+    if [[ $TARGET == win64 ]]; then
+        myconf+=(
+            --disable-asm
+        )
+    fi
+
     ./configure "${myconf[@]}"
     make -j$(nproc)
-    make install
+    make install DESTDIR="$FFBUILD_DESTDIR"
 }
 
 ffbuild_configure() {

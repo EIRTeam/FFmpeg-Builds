@@ -1,15 +1,13 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/xiph/ogg.git"
-SCRIPT_COMMIT="db5c7a49ce7ebda47b15b78471e78fb7f2483e22"
+SCRIPT_COMMIT="06a5e0262cdc28aa4ae6797627a783b5010440f0"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    cd "$FFBUILD_DLDIR/$SELF"
-
     ./autogen.sh
 
     local myconf=(
@@ -30,5 +28,5 @@ ffbuild_dockerbuild() {
 
     ./configure "${myconf[@]}"
     make -j$(nproc)
-    make install
+    make install DESTDIR="$FFBUILD_DESTDIR"
 }

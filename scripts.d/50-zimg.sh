@@ -1,19 +1,19 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/sekrit-twc/zimg.git"
-SCRIPT_COMMIT="ec0c604a9e29dd144b0bb1fb0974ac3b398fc18b"
+SCRIPT_COMMIT="67e0603271c080e22c8429856dd4a8a56587e61e"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerdl() {
-    default_dl "$SELF"
-    to_df "RUN git -C \"$SELF\" submodule update --init --recursive --depth=1"
+    default_dl .
+    echo "git submodule update --init --recursive --depth=1"
 }
 
 ffbuild_dockerbuild() {
-    cd "$FFBUILD_DLDIR/$SELF"
+    sed -i '1i #include <exception>' src/zimg/api/zimg.cpp
 
     ./autogen.sh
 
@@ -35,7 +35,7 @@ ffbuild_dockerbuild() {
 
     ./configure "${myconf[@]}"
     make -j$(nproc)
-    make install
+    make install DESTDIR="$FFBUILD_DESTDIR"
 }
 
 ffbuild_configure() {

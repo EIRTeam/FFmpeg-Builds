@@ -1,14 +1,14 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/FFTW/fftw3.git"
-SCRIPT_COMMIT="69f6c1a6ebd7ac5af33e7074134fb79fbc729c3d"
+SCRIPT_COMMIT="a7b679c528330cf6258253d6dcf5ec90552e6c93"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    cd "$FFBUILD_DLDIR/$SELF"
+    sed -i 's/-libs nums/-use-ocamlfind -package num/' genfft/Makefile.am
 
     local myconf=(
         --prefix="$FFBUILD_PREFIX"
@@ -40,7 +40,9 @@ ffbuild_dockerbuild() {
         return -1
     fi
 
+    sed -i 's/windows.h/process.h/' configure.ac
+
     ./bootstrap.sh "${myconf[@]}"
     make -j$(nproc)
-    make install
+    make install DESTDIR="$FFBUILD_DESTDIR"
 }

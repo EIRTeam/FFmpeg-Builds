@@ -1,5 +1,6 @@
-ARG GH_REPO=ghcr.io/btbn/ffmpeg-builds
-FROM $GH_REPO/base:latest
+ARG GH_REPO=ghcr.io/ffmpeg-builds/ffmpeg-builds
+ARG BASE_TAG_SUFFIX=
+FROM $GH_REPO/base:latest${BASE_TAG_SUFFIX}
 
 RUN --mount=src=ct-ng-config,dst=/.config \
     git clone --filter=blob:none https://github.com/crosstool-ng/crosstool-ng.git /ct-ng && cd /ct-ng && \
@@ -13,7 +14,7 @@ RUN --mount=src=ct-ng-config,dst=/.config \
 
 # Prepare "cross" environment to heavily favour static builds
 RUN \
-    find /opt/ct-ng -type l \
+    find /opt/ct-ng \( -type l \
         -and -name '*.so' \
         -and -not -ipath '*plugin*' \
         -and -not -name 'libdl.*' \
@@ -22,16 +23,26 @@ RUN \
         -and -not -name 'libmvec.*' \
         -and -not -name 'librt.*' \
         -and -not -name 'libpthread.*' \
-        -delete && \
-    find /opt/ct-ng \
+        \) -delete && \
+    find /opt/ct-ng \( \
         -name 'libdl.a' \
         -or -name 'libc.a' \
         -or -name 'libm.a' \
         -or -name 'libmvec.a' \
         -or -name 'librt.a' \
         -or -name 'libpthread.a' \
-        -delete && \
+        \) -delete && \
     mkdir /opt/ffbuild
+
+ENV FFBUILD_TOOLCHAIN=x86_64-ffbuild-linux-gnu \
+    FFBUILD_RUST_TARGET="x86_64-unknown-linux-gnu"
+
+RUN \
+    rustup default nightly && \
+    rustup target add "$FFBUILD_RUST_TARGET" && \
+    echo "[unstable]\ntarget-applies-to-host = true\nhost-config = true\n" > "$CARGO_HOME"/config.toml && \
+    echo "[target.$FFBUILD_RUST_TARGET]\nlinker = \"${FFBUILD_TOOLCHAIN}-gcc\"\nar = \"${FFBUILD_TOOLCHAIN}-gcc-ar\"\n" >> "$CARGO_HOME"/config.toml && \
+    echo "[target.host]\nlinker = \"gcc\"\nar = \"ar\"\n" >> "$CARGO_HOME"/config.toml
 
 ADD toolchain.cmake /toolchain.cmake
 ADD cross.meson /cross.meson
@@ -39,12 +50,12 @@ ADD cross.meson /cross.meson
 ADD gen-implib.sh /usr/bin/gen-implib
 RUN git clone --filter=blob:none --depth=1 https://github.com/yugr/Implib.so /opt/implib
 
-ENV FFBUILD_TOOLCHAIN=x86_64-ffbuild-linux-gnu
 ENV PATH="/opt/ct-ng/bin:${PATH}" \
     FFBUILD_TARGET_FLAGS="--pkg-config=pkg-config --cross-prefix=${FFBUILD_TOOLCHAIN}- --arch=x86_64 --target-os=linux" \
     FFBUILD_CROSS_PREFIX="${FFBUILD_TOOLCHAIN}-" \
-    FFBUILD_RUST_TARGET="x86_64-unknown-linux-gnu" \
     FFBUILD_PREFIX=/opt/ffbuild \
+    FFBUILD_DESTDIR=/opt/ffdest \
+    FFBUILD_DESTPREFIX=/opt/ffdest/opt/ffbuild \
     FFBUILD_CMAKE_TOOLCHAIN=/toolchain.cmake \
     PKG_CONFIG=pkg-config \
     PKG_CONFIG_LIBDIR=/opt/ffbuild/lib/pkgconfig:/opt/ffbuild/share/pkgconfig \

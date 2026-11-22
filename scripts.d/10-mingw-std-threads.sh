@@ -1,7 +1,11 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/meganz/mingw-std-threads.git"
-SCRIPT_COMMIT="6c2061b7da41d6aa1b2162ff4383ec3ece864bc6"
+SCRIPT_COMMIT="c931bac289dd431f1dd30fc4a5d1a7be36668073"
+
+ffbuild_depends() {
+    return 0
+}
 
 ffbuild_enabled() {
     [[ $TARGET == win* ]] || return -1
@@ -9,8 +13,6 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerbuild() {
-    cd "$FFBUILD_DLDIR/$SELF"
-
-    mkdir -p "$FFBUILD_PREFIX"/include
-    cp *.h "$FFBUILD_PREFIX"/include
+    mkdir -p "$FFBUILD_DESTPREFIX"/include
+    cp *.h "$FFBUILD_DESTPREFIX"/include
 }

@@ -1,25 +1,32 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://github.com/openssl/openssl.git"
-SCRIPT_COMMIT="openssl-3.0.9"
-SCRIPT_TAGFILTER="openssl-3.0.*"
+SCRIPT_COMMIT="openssl-3.6.5"
+SCRIPT_TAGFILTER="openssl-3.6.*"
+
+ffbuild_depends() {
+    echo base
+    echo zlib
+}
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerdl() {
-    default_dl "$SELF"
-    to_df "RUN git -C \"$SELF\" submodule update --init --recursive --depth=1"
+    default_dl .
+    echo "git submodule update --init --recursive --depth=1"
 }
 
 ffbuild_dockerbuild() {
-    cd "$FFBUILD_DLDIR/$SELF"
-
     local myconf=(
         threads
         zlib
         no-shared
+        no-tests
+        no-apps
+        no-legacy
+        no-ssl3
         enable-camellia
         enable-ec
         enable-srp
@@ -37,13 +44,20 @@ ffbuild_dockerbuild() {
             --cross-compile-prefix="$FFBUILD_CROSS_PREFIX"
             mingw
         )
+    elif [[ $TARGET == winarm64 ]]; then
+        myconf+=(
+            --cross-compile-prefix="$FFBUILD_CROSS_PREFIX"
+            mingwarm64
+        )
     elif [[ $TARGET == linux64 ]]; then
         myconf+=(
+            --openssldir=/etc/ssl
             --cross-compile-prefix="$FFBUILD_CROSS_PREFIX"
             linux-x86_64
         )
     elif [[ $TARGET == linuxarm64 ]]; then
         myconf+=(
+            --openssldir=/etc/ssl
             --cross-compile-prefix="$FFBUILD_CROSS_PREFIX"
             linux-aarch64
         )
@@ -66,7 +80,7 @@ ffbuild_dockerbuild() {
     sed -i -e "/^CFLAGS=/s|=.*|=${CFLAGS}|" -e "/^LDFLAGS=/s|=[[:space:]]*$|=${LDFLAGS}|" Makefile
 
     make -j$(nproc) build_sw
-    make install_sw
+    make install_sw DESTDIR="$FFBUILD_DESTDIR"
 }
 
 ffbuild_configure() {

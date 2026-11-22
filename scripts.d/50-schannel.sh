@@ -7,18 +7,22 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerdl() {
-    return 0
+    true
 }
 
 ffbuild_dockerstage() {
     return 0
 }
 
-ffbuild_dockerbuild() {
+ffbuild_dockerlayer() {
     return 0
 }
 
-ffbuild_dockerlayer_dl() {
+ffbuild_dockerfinal() {
+    return 0
+}
+
+ffbuild_dockerbuild() {
     return 0
 }
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_REPO="https://gitlab.freedesktop.org/mesa/drm.git"
-SCRIPT_COMMIT="7d7a9901bd67cf5b1ce07e5d237a82e13e9fb500"
+SCRIPT_COMMIT="33fab8cbca7f7581e955a675597d14412702edc4"
 
 ffbuild_enabled() {
     [[ $TARGET != linux* ]] && return -1
@@ -9,8 +9,6 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerbuild() {
-    cd "$FFBUILD_DLDIR/$SELF"
-
     mkdir build && cd build
 
     local myconf=(
@@ -20,7 +18,6 @@ ffbuild_dockerbuild() {
         -Dcairo-tests=disabled
         -Dvalgrind=disabled
         -Dexynos=disabled
-        -Dfreedreno=disabled
         -Domap=disabled
         -Detnaviv=disabled
         -Dintel=enabled
@@ -39,16 +36,16 @@ ffbuild_dockerbuild() {
     fi
 
     export CFLAGS="$RAW_CFLAGS"
-    export LDFLAFS="$RAW_LDFLAGS"
+    export LDFLAGS="$RAW_LDFLAGS"
 
     meson "${myconf[@]}" ..
     ninja -j$(nproc)
-    ninja install
+    DESTDIR="$FFBUILD_DESTDIR" ninja install
 
-    gen-implib "$FFBUILD_PREFIX"/lib/{libdrm.so.2,libdrm.a}
-    rm "$FFBUILD_PREFIX"/lib/libdrm*.so*
+    gen-implib "$FFBUILD_DESTPREFIX"/lib/{libdrm.so.2,libdrm.a}
+    rm "$FFBUILD_DESTPREFIX"/lib/libdrm*.so*
 
-    echo "Libs: -ldl" >> "$FFBUILD_PREFIX"/lib/pkgconfig/libdrm.pc
+    echo "Libs: -ldl" >> "$FFBUILD_DESTPREFIX"/lib/pkgconfig/libdrm.pc
 }
 
 ffbuild_configure() {
